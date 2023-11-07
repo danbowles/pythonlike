@@ -39,17 +39,39 @@ class Room:
     )
 
 
-def generate_dungeon(map_width, map_height) -> GameMap:
+def generate_dungeon(
+    room_max_number: int,
+    room_min_size: int,
+    room_max_size: int,
+    map_width: int,
+    map_height: int,
+    player: Entity
+  ) -> GameMap:
   dungeon = GameMap(map_width, map_height)
 
-  room_one = Room(x=20, y=15, width=10, height=15)
-  room_two = Room(x=35, y=15, width=10, height=15)
+  rooms: List[Room] = []
 
-  dungeon.tiles[room_one.inner] = tile_types.floor
-  dungeon.tiles[room_two.inner] = tile_types.floor
+  for r in range(room_max_number):
+    room_width = random.randint(room_min_size, room_max_size)
+    room_height = random.randint(room_min_size, room_max_size)
 
-  for x, y in tunnel(start=room_one.center, end=room_two.center):
-    dungeon.tiles[x, y] = tile_types.floor
+    x = random.randint(0, dungeon.width - room_width - 1)
+    y = random.randint(0, dungeon.height - room_height - 1)
+
+    new_room = Room(x, y, room_width, room_height)
+
+    if any(new_room.intersect(other_room) for other_room in rooms):
+      continue
+
+    dungeon.tiles[new_room.inner] = tile_types.floor
+
+    if len(rooms) == 0:
+      player.x, player.y = new_room.center
+    else:
+      for x, y in tunnel(new_room.center, rooms[-1].center):
+        dungeon.tiles[x, y] = tile_types.floor
+
+    rooms.append(new_room)
 
   return dungeon
 
